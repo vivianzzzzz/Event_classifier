@@ -38,16 +38,16 @@
 
   **Note:** Date, time, and location may require additional data cleaning for research purposes.
 
-# Data Retrieval
+## Data Retrieval
 
-## Step 1: Scrape Event IDs Based on Event Type
+### Step 1: Scrape Event IDs Based on Event Type
 - Use `0_student_group_scrape.py` to scrape event IDs and store them in the `0_event_id` folder.
 
-## Step 2: Data Cleaning
+### Step 2: Data Cleaning
 - Run `1_data_cleaning.py` to ensure events are not duplicated and generate a list of event URLs, stored in the `1_event_url` folder.
 
-## Step 3: Scrape Event Information Based on Event List
+### Step 3: Scrape Event Information Based on Event List
 - Utilize `2_event_info_scraper.py` to scrape data from the event list and store it in the `2_event_info` folder.
 
-## Step 4: Merge into One Dataset
+### Step 4: Merge into One Dataset
 - Execute `3_data_merging` to merge data from the `2_event_info` folder, add a concatenated column, and create the final dataset.
