@@ -10,7 +10,10 @@ def scrape_event_info(url_file, type_name, type_id, output_file):
         urls = [line.strip() for line in f]
 
     for url in urls:
-        response = requests.get(url)
+        try:
+            response = requests.get(url)
+        except requests.exceptions.RequestException:
+            continue
         soup = BeautifulSoup(response.content, "html.parser")
         name = soup.find("h1", {"class": "rsvp__event-name"})
         if name is not None and name.text:
@@ -51,7 +54,7 @@ def scrape_event_info(url_file, type_name, type_id, output_file):
                     "link": url,
                 }
             )
-
+            print(url)
     with open(output_file, "w", newline="") as f:
         writer = csv.DictWriter(
             f,
