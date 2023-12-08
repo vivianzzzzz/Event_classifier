@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pandas as pd
 from scipy.stats import dirichelet
 from sklearn.model_selection import train_test_split
 
@@ -17,7 +18,8 @@ class DiricheletClassifier:
         pass
 
 def main():
-    pass
+    df = pd.read_csv("./events")
+    
 
 if __name__ == "__main__":
     main()
