@@ -8,14 +8,15 @@ from sklearn.model_selection import train_test_split
 
 class DiricheletClassifier:
     def __init__(self):
-        pass
+        self.model = None
 
     def train(self, corpus):
         ## should return a model
-        return self
+        return self.model
 
     def test(self):
         pass
+
 
 def main():
     df = pd.read_csv("./events")
