@@ -9,6 +9,12 @@ class DiricheletClassifier:
     def __init__(self):
         pass
 
+    def train(self, corpus):
+        ## should return a model
+        return self
+
+    def test(self):
+        pass
 
 def main():
     pass
