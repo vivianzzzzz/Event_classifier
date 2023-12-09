@@ -1,26 +1,31 @@
-# -*- coding: utf-8 -*-
-
-import numpy as np
-import pandas as pd
-from scipy.stats import dirichelet
+import gensim
+from gensim import corpora
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
 
+# Assuming you have a list of documents and a list of their corresponding labels
+documents = [...]  # Your preprocessed documents
+labels = [...]     # Labels for each document
 
-class DiricheletClassifier:
-    def __init__(self):
-        self.model = None
+# Creating the term dictionary and document-term matrix
+dictionary = corpora.Dictionary(documents)
+doc_term_matrix = [dictionary.doc2bow(doc) for doc in documents]
 
-    def train(self, corpus):
-        ## should return a model
-        return self.model
+# Creating and training the LDA model
+lda = gensim.models.ldamodel.LdaModel(corpus=doc_term_matrix, id2word=dictionary, num_topics=5)
 
-    def test(self):
-        pass
+# Extracting features for the classifier
+features = [lda.get_document_topics(bow) for bow in doc_term_matrix]
+# You'll need to convert the features into a format suitable for the classifier
 
+# Splitting data for training and testing
+X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.3)
 
-def main():
-    df = pd.read_csv("./events")
-    
+# Training a classifier
+classifier = LogisticRegression()
+classifier.fit(X_train, y_train)
 
-if __name__ == "__main__":
-    main()
+# Predicting and evaluating
+predictions = classifier.predict(X_test)
+print(classification_report(y_test, predictions))
