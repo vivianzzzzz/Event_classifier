@@ -3,10 +3,18 @@ from gensim import corpora
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
+import pandas as pd
 
-# Assuming you have a list of documents and a list of their corresponding labels
-documents = [...]  # Your preprocessed documents
-labels = [...]     # Labels for each document
+
+d = pd.read_csv("./events.csv")
+d.dropna(subset=["title_details", "type_id"], inplace=True)
+# print(d.head())
+# print(sum(d["title_details"].isna()))
+# documents = d["title_details"].tolist()
+documents = list(map(lambda x:x.split(' '), d["title_details"].tolist()))  # Your preprocessed documents
+# print(documents)
+labels = list(map(lambda x:x-1,list(map(int, d["type_id"].tolist()))))# Labels for each document
+assert len(documents) == len(labels)
 
 # Creating the term dictionary and document-term matrix
 dictionary = corpora.Dictionary(documents)
@@ -24,7 +32,11 @@ X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=
 
 # Training a classifier
 classifier = LogisticRegression()
+# print(list(zip(X_train, y_train)))
+# print(X_train)
+# print(y_train)
 classifier.fit(X_train, y_train)
+exit()
 
 # Predicting and evaluating
 predictions = classifier.predict(X_test)
