@@ -8,17 +8,23 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, classification_report
+from collections import Counter
+from transformers import get_linear_schedule_with_warmup
 # import time
 
 # start_time = time.time()
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 
 events_df = pd.read_csv("events.csv")
 #events_df["type_id"] = events_df["type_id"].replace([3, 4, 5], 3) # Combining related category and see if the performance improves
-#events_df = events_df[events_df["type_id"] <= 3]  # Only keep the first 3 categories
+events_df = events_df[events_df["type_id"] <= 3]  # Only keep the first 3 categories
 texts = events_df["title_details"].astype(str).tolist()
 labels = events_df["type_id"].astype(int) - 1  # Subtract 1 to adjust label values, make it starts with 0
 labels = labels.to_list()
+
 
 
 train_texts, val_texts, train_labels, val_labels = train_test_split(
@@ -26,24 +32,11 @@ train_texts, val_texts, train_labels, val_labels = train_test_split(
 )
 
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
 
 # Tokenize input texts and convert to PyTorch tensors
 train_encodings = tokenizer(
     train_texts, truncation=True, padding=True, max_length=64, return_tensors="pt"
 )
-'''
-train_texts: This is a list or iterable containing the training texts that you want to encode.
-
-truncation=True: When set to True, this option truncates sequences to the specified max_length if they exceed it. Truncation is relevant when dealing with sequences that are longer than the specified maximum length.
-
-padding=True: When set to True, this option pads sequences to the specified max_length if they are shorter than it. Padding is used to make all input sequences in a batch have the same length, which is important when training neural networks.
-
-max_length=64: This is the maximum length of the sequences after truncation or padding. Any sequence longer than this length will be truncated, and any sequence shorter than this length will be padded.
-
-return_tensors="pt": This option specifies the format of the output. In this case, it's set to "pt," indicating that the output should be in PyTorch tensors. Other options could include "tf" for TensorFlow tensors or "np" for NumPy arrays.
-'''
-
 val_encodings = tokenizer(
     val_texts, truncation=True, padding=True, max_length=64, return_tensors="pt"
 )
@@ -56,21 +49,31 @@ train_dataset = TensorDataset(
 val_dataset = TensorDataset(
     val_encodings["input_ids"], val_encodings["attention_mask"], val_labels
 )
+
 # Create DataLoader for training and validation sets
-train_loader = DataLoader(train_dataset, batch_size=20, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=20, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
 # # Set up optimizer and loss function
-optimizer = AdamW(model.parameters(), lr=0.001, weight_decay=0.01)
+model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+optimizer = AdamW(model.parameters(), lr=5e-5)
 criterion = torch.nn.CrossEntropyLoss()
 
 # # Training loop
-num_epochs = 10
+num_epochs = 4
+total_steps = len(train_loader) * num_epochs
+scheduler = get_linear_schedule_with_warmup(
+    optimizer, num_warmup_steps=0, num_training_steps=total_steps
+)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 for epoch in range(num_epochs):
+    total_train_loss = 0
     model.train()
+    losses = []  # m
+    correct_predictions = 0  # m
+    total_samples = 0
     for batch in train_loader:
         input_ids, attention_mask, labels = batch
         input_ids, attention_mask, labels = (
@@ -78,20 +81,29 @@ for epoch in range(num_epochs):
             attention_mask.to(device),
             labels.to(device),
         )
+        outputs = model(
+            input_ids=input_ids, attention_mask=attention_mask, labels=labels
+        )
+        loss = outputs.loss
+        # Get predicted labels
+        _, preds = torch.max(outputs.logits, dim=1)
 
-        optimizer.zero_grad()
-        outputs = model(input_ids, attention_mask=attention_mask)
-        logits = outputs.logits  # logits before softmax
-        loss = criterion(logits, labels)
-        #loss = outputs.loss
+        # Update total correct predictions and total samples
+        correct_predictions += torch.sum(preds == labels).item()
+        total_samples += labels.size(0)
         loss.backward()
         optimizer.step()
+        optimizer.zero_grad()
+        # print(f"Epoch: {epoch+1}, Loss: {loss.item()}")
+    train_accuracy = correct_predictions / total_samples
+    print(
+        f"Epoch for {epoch + 1}/{num_epochs}, Avg. Training Loss: {total_train_loss}, Training Accuracy: {train_accuracy * 100:.2f}%"
+    )
     # Validation loop
     model.eval()
     val_loss = 0
-    correct = 0
-    total = 0
-
+    val_correct = 0
+    val_total = 0
     with torch.no_grad():
         for batch in val_loader:
             input_ids, attention_mask, labels = batch
@@ -100,23 +112,19 @@ for epoch in range(num_epochs):
                 attention_mask.to(device),
                 labels.to(device),
             )
-            outputs = model(input_ids, attention_mask=attention_mask)
-            logits = outputs.logits  # logits before softmax
-            loss = criterion(logits, labels)
+
+            outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+            loss = outputs.loss
             val_loss += loss.item()
 
             # Calculate accuracy
-            _, predicted = torch.max(outputs.logits, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            _, preds = torch.max(outputs.logits, 1)
+            val_total += labels.size(0)
+            val_correct += (preds == labels).sum().item()
 
     avg_val_loss = val_loss / len(val_loader)
-    accuracy = correct / total
+    val_accuracy = val_correct / val_total
 
     print(
-        f"Epoch {epoch + 1}/{num_epochs}, Loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.2%}"
+        f"Epoch {epoch + 1}/{num_epochs}, Avg. val Loss: {avg_val_loss:.4f}, val Accuracy: {val_accuracy:.2%}"
     )
-
-# end_time = time.time()
-# execution_time = end_time - start_time
-# print("Execution time:", execution_time, "seconds")
