@@ -33,8 +33,23 @@ X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=
 # Training a classifier
 classifier = LogisticRegression()
 # print(list(zip(X_train, y_train)))
-# print(X_train)
-# print(y_train)
+
+
+# Convert each inner list to a dictionary with labels as keys
+dict_of_lists = [{label: value for label, value in inner_list} for inner_list in X_train]
+
+# Determine the maximum label across all inner lists
+max_label = max(max(d.keys(), default=-1) for d in dict_of_lists)
+
+# Create a new list for each inner list with values for each label, defaulting to 0 if the label is missing
+collapsed_X_train = [
+    [d.get(label, 0.0) for label in range(max_label + 1)] for d in dict_of_lists
+]
+
+
+
+print(X_train)
+print(collapsed_X_train)
 classifier.fit(X_train, y_train)
 exit()
 
