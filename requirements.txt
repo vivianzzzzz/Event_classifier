@@ -12,4 +12,3 @@ pandas
 scipy
 scikit-learn
 gensim
-random
