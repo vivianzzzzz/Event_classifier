@@ -20,7 +20,7 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 
 events_df = pd.read_csv("events.csv")
 #events_df["type_id"] = events_df["type_id"].replace([3, 4, 5], 3) # Combining related category and see if the performance improves
-events_df = events_df[events_df["type_id"] <= 3]  # Only keep the first 3 categories
+events_df = events_df[events_df["type_id"] <= 2]  # Only keep the first 3 categories
 texts = events_df["title_details"].astype(str).tolist()
 labels = events_df["type_id"].astype(int) - 1  # Subtract 1 to adjust label values, make it starts with 0
 labels = labels.to_list()
