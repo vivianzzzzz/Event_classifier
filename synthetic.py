@@ -4,6 +4,7 @@ import random
 # Load the CSV file
 df = pd.read_csv('events.csv')
 
+
 # Function to shuffle words in a string
 def shuffle_words(string):
     words = string.split()
@@ -12,6 +13,7 @@ def shuffle_words(string):
 
 # Apply the function to the 'title_details' column
 df['title_details'] = df['title_details'].apply(shuffle_words)
+print(df.head())
 
 df.to_csv('events_shuffled.csv', index=False)
 
