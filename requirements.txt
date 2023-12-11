@@ -12,6 +12,6 @@ pandas
 scipy
 scikit-learn
 gensim
-torch
-torchvision
-torchaudio
+#torch
+#torchvision
+#torchaudio
