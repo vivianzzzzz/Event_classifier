@@ -1,5 +1,6 @@
 # On Campus Event Classifier at Duke
 **Student Event Classification Model Using NLP Techniques**
+
 Team member: Xiyue(Vivian) Zhang, Gavin Li, Lisa Wang
 
 #### Description:
