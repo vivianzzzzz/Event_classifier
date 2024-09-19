@@ -1,5 +1,6 @@
 # On Campus Event Classifier at Duke
 **Student Event Classification Model Using NLP Techniques**
+Team member: Xiyue(Vivian) Zhang, Gavin Li, Lisa Wang
 
 #### Description:
 This project aims to classify student group events at Duke University using natural language processing (NLP) techniques. By implementing models such as Logistic Regression with Latent Dirichlet Allocation (LDA) and Transformers (BERT), the project achieved a classification accuracy of up to 98%. 
