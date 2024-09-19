@@ -3,6 +3,7 @@
 
 #### Description:
 This project aims to classify student group events at Duke University using natural language processing (NLP) techniques. By implementing models such as Logistic Regression with Latent Dirichlet Allocation (LDA) and Transformers (BERT), the project achieved a classification accuracy of up to 98%. 
+Here is the full report of the project: 
 
 #### Project Outline:
 1. **Data Collection and Preparation**
